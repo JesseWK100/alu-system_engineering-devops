@@ -1,26 +1,22 @@
 #!/usr/bin/env bash
-# Exit immediately if a command exits with a non-zero status
-set -e
+# Update package list and install Nginx
+sudo apt-get update -y
+sudo apt-get install nginx -y
 
-# Update package index
-apt-get update -y
+# Ensure Nginx listens on port 80
+sudo sed -i 's/# listen 80 default_server;/listen 80 default_server;/g' /etc/nginx/sites-available/default
+sudo sed -i 's/# listen 
 
-# Install Nginx
-apt-get install -y nginx
+\[::\]
 
-# Write the content to the root HTML file
-echo "Holberton School" > /var/www/html/index.html
+:80 default_server;/listen 
 
-# Restart Nginx using the service command (not systemctl)
-service nginx restart
+\[::\]
 
-# Ensure Nginx is listening on port 80 (default configuration)
-# If any custom configuration is needed, uncomment the following lines:
-# sed -i 's/listen 80 default_server;/listen 80;/' /etc/nginx/sites-available/default
-# sed -i 's/listen \[::\]:80 default_server;/listen \[::\]:80;/' /etc/nginx/sites-available/default
+:80 default_server;/g' /etc/nginx/sites-available/default
 
-# Reload Nginx to apply changes
-service nginx reload
+# Modify the default HTML file to include "Holberton School"
+echo 'Holberton School for the win!' | sudo tee /var/www/html/index.html
 
-# Check if Nginx is running (optional for debugging)
-# service nginx status
+# Restart Nginx using service
+sudo service nginx restart
