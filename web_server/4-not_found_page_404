@@ -1,25 +1,44 @@
 #!/usr/bin/env bash
-# Script to configure Nginx with a custom 404 page.
+# Script to configure Nginx with a custom 404 page
 
-# Exit on errors
+# Exit on any error
 set -e
 
-# Update and install Nginx
+# Update the system and install Nginx
 sudo apt update
 sudo apt install -y nginx
 
-# Create the custom 404 page directory and file
+# Create the custom 404 page
 sudo mkdir -p /var/www/html/errors
 echo "Ceci n'est pas une page" | sudo tee /var/www/html/errors/404.html
 
 # Configure Nginx to use the custom 404 page
-NGINX_CONF="/etc/nginx/sites-available/default"
-sudo sed -i '/server {/a\    error_page 404 /errors/404.html;' $NGINX_CONF
-sudo sed -i '/server {/a\    location = /errors/404.html { root /var/www/html; internal; }' $NGINX_CONF
+sudo tee /etc/nginx/sites-available/default <<EOF > /dev/null
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
 
-# Reload Nginx to apply changes
+    root /var/www/html;
+    index index.html;
+
+    server_name _;
+
+    # Custom 404 error page
+    error_page 404 /errors/404.html;
+    location = /errors/404.html {
+        root /var/www/html;
+        internal;
+    }
+
+    location / {
+        try_files \$uri \$uri/ =404;
+    }
+}
+EOF
+
+# Ensure proper permissions for the web files
+sudo chown -R www-data:www-data /var/www/html
+
+# Test the configuration and reload Nginx
 sudo nginx -t
 sudo systemctl reload nginx
-
-# Ensure proper permissions
-sudo chown -R www-data:www-data /var/www/html/errors
