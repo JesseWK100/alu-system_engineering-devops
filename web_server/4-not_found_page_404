@@ -1,44 +1,21 @@
 #!/usr/bin/env bash
-# Script to configure Nginx with a custom 404 page
+# Configures a custom 404 page with the string 'Ceci n'est pas une page'
 
-# Exit on any error
-set -e
+sudo apt-get update
+sudo apt-get install -y nginx
 
-# Update the system and install Nginx
-sudo apt update
-sudo apt install -y nginx
+echo "Holberton School" | sudo tee /var/www/html/index.html
 
-# Create the custom 404 page
-sudo mkdir -p /var/www/html/errors
-echo "Ceci n'est pas une page" | sudo tee /var/www/html/errors/404.html
+# redirection config
+config_str="server_name _;\\
+    rewrite ^/redirect_me https://github.com permanent;"
+sudo sed -i "s|server_name _;|$config_str|" /etc/nginx/sites-available/default
 
-# Configure Nginx to use the custom 404 page
-sudo tee /etc/nginx/sites-available/default <<EOF > /dev/null
-server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
+# creating 404 error page
+echo "Ceci n'est pas une page" | sudo tee /var/www/html/404.html
+page="listen 80 default_server;\\n\\terror_page 404 /404.html;\\n\\tlocation = /404.html {\\n\\t\\troot /var/www/html;\\n\\t\\tinternal;\\n\\t}"
+sudo sed -i "s|listen 80 default_server;|$page|" /etc/nginx/sites-available/default
 
-    root /var/www/html;
-    index index.html;
-
-    server_name _;
-
-    # Custom 404 error page
-    error_page 404 /errors/404.html;
-    location = /errors/404.html {
-        root /var/www/html;
-        internal;
-    }
-
-    location / {
-        try_files \$uri \$uri/ =404;
-    }
-}
-EOF
-
-# Ensure proper permissions for the web files
-sudo chown -R www-data:www-data /var/www/html
-
-# Test the configuration and reload Nginx
+# config testing and restarting
 sudo nginx -t
-sudo systemctl reload nginx
+sudo service nginx restart
